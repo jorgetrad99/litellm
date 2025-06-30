@@ -3,6 +3,7 @@ ARG LITELLM_BUILD_IMAGE=python:3.11-slim
 
 # Runtime image
 ARG LITELLM_RUNTIME_IMAGE=python:3.11-slim
+
 # Builder stage
 FROM $LITELLM_BUILD_IMAGE AS builder
 
@@ -12,8 +13,12 @@ WORKDIR /app
 USER root
 
 # Install build dependencies
-RUN apt-get update && apt install gcc python3-dev openssl openssl-dev
-
+RUN apt-get update && apt-get install -y \
+    gcc \
+    python3-dev \
+    libssl-dev \
+    openssl \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip && \
     pip install build
@@ -51,18 +56,22 @@ FROM $LITELLM_RUNTIME_IMAGE AS runtime
 USER root
 
 # Install runtime dependencies
-RUN apt-get update && apt install openssl tzdata
+RUN apt-get update && apt-get install -y \
+    openssl \
+    tzdata \
+ && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
 # Copy the current directory contents into the container at /app
 COPY . .
 RUN ls -la /app
 
-# Copy the built wheel from the builder stage to the runtime stage; assumes only one wheel file is present
+# Copy the built wheel from the builder stage to the runtime stage
 COPY --from=builder /app/dist/*.whl .
 COPY --from=builder /wheels/ /wheels/
 
-# Install the built wheel using pip; again using a wildcard if it's the only file
+# Install the built wheel using pip
 RUN pip install *.whl /wheels/* --no-index --find-links=/wheels/ && rm -f *.whl && rm -rf /wheels
 
 # Generate prisma client
