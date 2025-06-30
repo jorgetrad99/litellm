@@ -1,8 +1,8 @@
 # Base image for building
-ARG LITELLM_BUILD_IMAGE=cgr.dev/chainguard/python:latest-dev
+ARG LITELLM_BUILD_IMAGE=python:3.11-slim
 
 # Runtime image
-ARG LITELLM_RUNTIME_IMAGE=cgr.dev/chainguard/python:latest-dev
+ARG LITELLM_RUNTIME_IMAGE=python:3.11-slim
 # Builder stage
 FROM $LITELLM_BUILD_IMAGE AS builder
 
